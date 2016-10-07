@@ -50,8 +50,8 @@ int main (void)
     }
 
     /* Delete 0 and 1 as primes */
-    BIT_CLEAR(buffer[1],0);
-    BIT_CLEAR(buffer[1],1);
+    BIT_CLEAR(buffer[0],0);
+    BIT_CLEAR(buffer[0],1);
     
     pthread_t my_threads[NROF_SIEVE];
 
