@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <unistd.h>     // for usleep()
 #include <time.h>       // for time()
+#include <pthread.h>
 
 #include "prime.h"
 
@@ -34,7 +35,55 @@ typedef unsigned long long  MY_TYPE;
 // clear bit n in v
 #define BIT_CLEAR(v,n)      ((v) =  (v) & ~BITMASK(n))
 
-static void rsleep (int t);
+
+
+/*
+ * rsleep(int t)
+ *
+ * The calling thread will be suspended for a random amount of time between 0 and t microseconds
+ * At the first call, the random generator is seeded with the current time
+ */
+static void rsleep (int t)
+{
+    static bool first_call = true;
+    
+    if (first_call == true)
+    {
+        srandom (time (NULL) % getpid ());
+        first_call = false;
+    }
+    usleep (random() % t);
+}
+
+
+/* Returns the buffer element */
+int elt (int i) {
+    return i/64;
+}
+
+
+/* Returns the bit digit */
+int bit (int i) {
+    return i%64;
+}
+
+
+/* Thread functioning */
+static void * thread (void * arg) {
+    int *   argk;
+    int     k;
+    
+    argk = (int *) arg;
+    k = *argk;
+    free (arg);
+    
+    rsleep(30);
+    
+    printf("I am a working thread with i: %d\n", k);
+    
+    return (0);
+} 
+
 
 int main (void)
 {
@@ -58,7 +107,7 @@ int main (void)
     /* Delete all non-primes according to Sieve */
     int j;
     for (i = 2; i < NROF_SIEVE; i++) {
-        pthread_create (&my_threads[i], NULL, my_mutex_thread, NULL);
+        pthread_create (&my_threads[i], NULL, thread, NULL);
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
             for (j = (i*i); j < NROF_SIEVE; j = j + i) {
                 BIT_CLEAR(buffer[elt(j)],bit(j));
@@ -75,48 +124,4 @@ int main (void)
 
 
     return (0);
-}
-
-/*
- * rsleep(int t)
- *
- * The calling thread will be suspended for a random amount of time between 0 and t microseconds
- * At the first call, the random generator is seeded with the current time
- */
-static void rsleep (int t)
-{
-    static bool first_call = true;
-    
-    if (first_call == true)
-    {
-        srandom (time (NULL) % getpid ());
-        first_call = false;
-    }
-    usleep (random() % t);
-}
-
-/* Returns the buffer element */
-int elt (int i) {
-    return i/64;
-}
-
-/* Returns the bit digit */
-int bit (int i) {
-    return i%64;
-}
-
-/* Thread functioning */
-static void * thread (void * arg) {
-    int *   argk;
-    int     k;
-    
-    argk = (int *) arg;
-    k = *argk;
-    free (arg);
-    
-    rsleep(30);
-    
-    printf("I am a working thread with i: %d\n", k);
-    
-    return (0);
-}   
+}  
