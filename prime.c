@@ -13,6 +13,7 @@
  */
  
 #include <stdio.h>
+#include <math.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>     // for usleep()
@@ -108,7 +109,7 @@ static void * thread (void * arg) {
 
 int main (void)
 {
-    // TODO: start threads generate all primes between 2 and NROF_SIEVE and output the results
+    // start threads generate all primes between 2 and NROF_SIEVE and output the results
     // (see thread_malloc_free_test() and thread_mutex_test() how to use threads and mutexes,
     //  see bit_test() how to manipulate bits in a large integer)
 
@@ -123,7 +124,8 @@ int main (void)
     BIT_CLEAR(buffer[0],0);
     BIT_CLEAR(buffer[0],1);
     
-    pthread_t my_threads[NROF_SIEVE];
+    // Array that holds potential thread IDs
+    pthread_t my_threads[((int) sqrt(NROF_SIEVE))];
 
     /* Delete all non-primes according to Sieve */
     for (i = 2; (i*i) < NROF_SIEVE; i++) {
