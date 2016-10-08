@@ -1,0 +1,36 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+
+%opening
+\title{Threaded application}
+\author{J. van Straaten 0924283 \& R.T. Verschuuren 0916476}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+We faced two main issues related to synchronization while writing this program:
+
+\begin{enumerate}
+ \item Exclusive access to the buffer;
+ \item Avoiding creating more threads than allowed;
+ \item Avoid busy waiting.
+\end{enumerate}
+
+\section{Exclusive access} \label{sec1}
+The first problem we faced was that multiple threads may want to access the buffer at the same time, this cannot be allowed however as this would make it possible for some changes to the buffer to be lost. We solved this problem by using a mutex to control access to this buffer, this mutex is called ``bufferlock'' and has been implemented to ensure the following condition:
+
+``No two threads may access the buffer at the same time.''
+
+This has been achieved by surrounding the critical region in which the buffer is accessed with the mutex lock which locks and unlocks ``bufferlock''.
+
+\section{Amount of threads}
+The second issue was that we are only allowed a predetermined number of threads. This means that there must be some mechanism in place to count the current number of threads and stop the creation of new ones when the maximum has been reached, the program must also detect the termination of a thread and resume thread creation.
+
+This problem was solved through the introduction of a variable which contains the current number of threads, when a thread is created this variable is incremented and when it is terminated this variable is decremented. Because there are multiple threads that have access to this variable exclusive access had to be guaranteed, this was done as described in \ref{sec1} except this time with a mutex named ``nrthreadlock''.
+
+\section{Avoid busy waiting}
+Since the main thread is not allowed to create more than a given number of theads it must at some point stop. The obvious way of doing this is by continuously checking whether the current number of threads is equal to the maximum before creating a new one. The problem is that this introduces busy waiting which is not desireable. To deal with this problem a new mutex, named ``threadcreationlock'', was introduced this mutex is locked by the main thread when it detects that the maximum number of helpers has been reached. The main thread therefore does not spend any time busy waiting as it simply runs into a locked mutex. When a thread is done computing it unlocks the mutex which allows the main thread to continue.
+
+\end{document}

@@ -161,6 +161,7 @@ int main (void)
         pthread_mutex_lock(&threadcreationlock);
     }
     
+    
     /* Display all primes */
     for (i = 2; i <= NROF_SIEVE; i++) {
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
