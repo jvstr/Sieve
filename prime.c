@@ -87,7 +87,7 @@ static void * thread (void * arg) {
     
     // remove multiples of the argument from the buffer (they are not primes)
     int j;
-    for (j = (k*k); j < NROF_SIEVE; j = j + k) {
+    for (j = (k*k); j <= NROF_SIEVE; j = j + k) {
         // random sleep to make the execution order less predictable
         rsleep(100);
         
@@ -132,7 +132,7 @@ int main (void)
     pthread_t my_threads[((int) sqrt(NROF_SIEVE))];
 
     /* Delete all non-primes according to Sieve */
-    for (i = 2; (i*i) < NROF_SIEVE; i++) {
+    for (i = 2; (i*i) <= NROF_SIEVE; i++) {
         // check whether the number is not yet striped out (possibly a prime)
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
             
@@ -162,7 +162,7 @@ int main (void)
     }
     
     /* Display all primes */
-    for (i = 2; i < NROF_SIEVE; i++) {
+    for (i = 2; i <= NROF_SIEVE; i++) {
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
             printf("%d\n", i);
         }
