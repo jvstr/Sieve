@@ -17,7 +17,6 @@
 #include <stdbool.h>
 #include <unistd.h>     // for usleep()
 #include <time.h>       // for time()
-#include <pthread.h>
 
 #include "prime.h"
 
@@ -34,7 +33,6 @@ typedef unsigned long long  MY_TYPE;
 
 // clear bit n in v
 #define BIT_CLEAR(v,n)      ((v) =  (v) & ~BITMASK(n))
-
 
 
 /*
@@ -54,7 +52,6 @@ static void rsleep (int t)
     }
     usleep (random() % t);
 }
-
 
 /* Returns the buffer element */
 int elt (int i) {
@@ -82,7 +79,7 @@ static void * thread (void * arg) {
     printf("I am a working thread with i: %d\n", k);
     
     return (0);
-} 
+}
 
 
 int main (void)
@@ -106,8 +103,8 @@ int main (void)
 
     /* Delete all non-primes according to Sieve */
     int j;
-    for (i = 2; i < NROF_SIEVE; i++) {
-        pthread_create (&my_threads[i], NULL, thread, NULL);
+    for (i = 2; (i*i) < NROF_SIEVE; i++) {
+        //pthread_create (&my_threads[i], NULL, my_mutex_thread, NULL);
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
             for (j = (i*i); j < NROF_SIEVE; j = j + i) {
                 BIT_CLEAR(buffer[elt(j)],bit(j));
@@ -116,12 +113,13 @@ int main (void)
     }
 
     /* Display all primes */
-    for (i = 2; i < NROF_SIEVE; i++) {
-        if (BIT_IS_SET(buffer[bit(i)],elt(i))) {
+    for (i = 2; i < 100; i++) {
+        if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
             printf("%d\n", i);
         }
     }
 
 
     return (0);
-}  
+}
+ 
