@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <unistd.h>     // for usleep()
 #include <time.h>       // for time()
+#include <pthread.h>
 
 #include "prime.h"
 
@@ -33,6 +34,9 @@ typedef unsigned long long  MY_TYPE;
 
 // clear bit n in v
 #define BIT_CLEAR(v,n)      ((v) =  (v) & ~BITMASK(n))
+
+// declare a mutex, and it is initialized as well
+static pthread_mutex_t      bufferlock          = PTHREAD_MUTEX_INITIALIZER;
 
 
 /*
@@ -74,9 +78,17 @@ static void * thread (void * arg) {
     k = *argk;
     free (arg);
     
-    rsleep(30);
-    
     printf("I am a working thread with i: %d\n", k);
+    
+    
+    int j;
+    for (j = (k*k); j < NROF_SIEVE; j = j + k) {
+        rsleep(100);
+        pthread_mutex_lock(&bufferlock);
+        BIT_CLEAR(buffer[elt(j)],bit(j));
+        pthread_mutex_unlock(&bufferlock);
+    }
+    
     
     return (0);
 }
@@ -102,16 +114,21 @@ int main (void)
     pthread_t my_threads[NROF_SIEVE];
 
     /* Delete all non-primes according to Sieve */
-    int j;
     for (i = 2; (i*i) < NROF_SIEVE; i++) {
-        //pthread_create (&my_threads[i], NULL, my_mutex_thread, NULL);
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
-            for (j = (i*i); j < NROF_SIEVE; j = j + i) {
-                BIT_CLEAR(buffer[elt(j)],bit(j));
-            }
+            
+            //create parameter value for the other threads
+            int * parameter;
+            parameter = malloc (sizeof (int));
+            *parameter = i;
+            
+            // create the other threads
+            pthread_create (&my_threads[i], NULL, thread, parameter);
         }
     }
 
+    sleep(1);
+    
     /* Display all primes */
     for (i = 2; i < 100; i++) {
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
