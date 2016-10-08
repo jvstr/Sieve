@@ -3,7 +3,7 @@
  * Threaded Application
  *
  * Julia van Straaten (0924283)
- * STUDENT_NAME_2 (STUDENT_NR_2)
+ * Rolf Verschuuren (0916476)
  *
  * Grading:
  * Students who hand in clean code that fully satisfies the minimum requirements will get an 8. 
@@ -37,6 +37,11 @@ typedef unsigned long long  MY_TYPE;
 
 // declare a mutex, and it is initialized as well
 static pthread_mutex_t      bufferlock          = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t      nrthreadlock          = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t      threadcreationlock          = PTHREAD_MUTEX_INITIALIZER;
+
+// record the number of threads in use
+int nrThreads = 0;
 
 
 /*
@@ -78,17 +83,24 @@ static void * thread (void * arg) {
     k = *argk;
     free (arg);
     
-    printf("I am a working thread with i: %d\n", k);
-    
-    
     int j;
     for (j = (k*k); j < NROF_SIEVE; j = j + k) {
         rsleep(100);
+        
+        // critical region
         pthread_mutex_lock(&bufferlock);
         BIT_CLEAR(buffer[elt(j)],bit(j));
         pthread_mutex_unlock(&bufferlock);
+        // end critical region
     }
     
+    // decrement nr of threads in use
+    pthread_mutex_lock(&nrthreadlock);
+    nrThreads--;
+    pthread_mutex_unlock(&nrthreadlock);
+    
+    // allow another thread to be created
+    pthread_mutex_unlock(&threadcreationlock);
     
     return (0);
 }
@@ -124,13 +136,24 @@ int main (void)
             
             // create the other threads
             pthread_create (&my_threads[i], NULL, thread, parameter);
+            
+            // increment number of threads in use
+            pthread_mutex_lock(&nrthreadlock);
+            nrThreads++;
+            pthread_mutex_unlock(&nrthreadlock);
+        }
+        
+        while (nrThreads >= NROF_THREADS) {
+            pthread_mutex_lock(&threadcreationlock);
         }
     }
-
-    sleep(1);
+    
+    while (nrThreads > 0) {
+        pthread_mutex_lock(&threadcreationlock);
+    }
     
     /* Display all primes */
-    for (i = 2; i < 100; i++) {
+    for (i = 2; i < NROF_SIEVE; i++) {
         if (BIT_IS_SET(buffer[elt(i)],bit(i))) {
             printf("%d\n", i);
         }
